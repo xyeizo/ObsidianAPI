@@ -117,11 +117,16 @@ namespace Obsidian
         }
         public async Task LinkNotesAsync(string noteName1, string listName, List<string> notes)
         {
+            if (string.IsNullOrWhiteSpace(noteName1) || string.IsNullOrWhiteSpace(listName) || notes == null)
+                throw new ArgumentException("Note names and list name cannot be null or empty.");
+
             StringBuilder append = new StringBuilder();
             append.AppendLine();
             append.AppendLine($" - {listName}");
             foreach (var item in notes)
             {
+                if (string.IsNullOrWhiteSpace(item))
+                    throw new ArgumentException("Note names in the list cannot be null or empty.");
                 append.AppendLine($"\t - [[{item}]]");
             }
             await AppendContentAsync(noteName1, append.ToString());
