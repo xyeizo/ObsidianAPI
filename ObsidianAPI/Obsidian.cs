@@ -97,15 +97,24 @@ namespace Obsidian
 
         public async Task<string> ReadNoteAsync(string noteName)
         {
-            if (noteCache.TryGetValue(noteName, out var content))
-                return content;
+            ValidateNoteName(noteName);
+
+            lock (cacheLock)
+            {
+                if (noteCache.TryGetValue(noteName, out var cacheContent))
+                    return cacheContent;
+            }
 
             string filePath = Path.Combine(vaultPath, noteName + ".md");
-            content = await File.ReadAllTextAsync(filePath);
-            noteCache[noteName] = content;
+            string content = await File.ReadAllTextAsync(filePath);
+
+            lock (cacheLock)
+            {
+                noteCache[noteName] = content;
+            }
+
             return content;
         }
-
         public async Task LinkNotesAsync(string noteName1, string listName, List<string> notes)
         {
             StringBuilder append = new StringBuilder();
