@@ -80,10 +80,19 @@ namespace Obsidian
 
         public async Task AppendContentAsync(string noteName, string content)
         {
+            ValidateNoteName(noteName);
+            if (content == null) throw new ArgumentNullException(nameof(content), "Content to append cannot be null.");
+
             string filePath = Path.Combine(vaultPath, noteName + ".md");
             await File.AppendAllTextAsync(filePath, content);
-            if (noteCache.ContainsKey(noteName))
-                noteCache[noteName] += content;
+
+            lock (cacheLock)
+            {
+                if (noteCache.ContainsKey(noteName))
+                {
+                    noteCache[noteName] += content;
+                }
+            }
         }
 
         public async Task<string> ReadNoteAsync(string noteName)
