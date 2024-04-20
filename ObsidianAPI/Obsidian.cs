@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using System.Text;
+using System.Linq.Expressions;
 
 namespace Obsidian
 {
@@ -7,6 +8,7 @@ namespace Obsidian
     {
         private readonly string vaultPath;
         private readonly Dictionary<string, string> noteCache = new Dictionary<string, string>();
+        private readonly object cacheLock = new object();
 
         public ObsidianAPI(string path)
         {
@@ -16,15 +18,27 @@ namespace Obsidian
 
         public void RenameNote(string originalName, string newName)
         {
+            ValidateNoteName(originalName);
+            ValidateNoteName(newName);
+
             string originalPath = Path.Combine(vaultPath, originalName + ".md");
             string newPath = Path.Combine(vaultPath, newName + ".md");
+
             if (!File.Exists(originalPath))
-                throw new FileNotFoundException("The original note does not exist.");
+                throw new FileNotFoundException($"The note '{originalName}' does not exist.");
+
+            if (File.Exists(newPath))
+                throw new InvalidOperationException($"A note with the name '{newName}' already exists.");
+
             File.Move(originalPath, newPath);
-            if (noteCache.ContainsKey(originalName))
+
+            lock (cacheLock)
             {
-                noteCache[newName] = noteCache[originalName];
-                noteCache.Remove(originalName);
+                if (noteCache.ContainsKey(originalName))
+                {
+                    noteCache[newName] = noteCache[originalName];
+                    noteCache.Remove(originalName);
+                }
             }
         }
 
@@ -35,6 +49,12 @@ namespace Obsidian
                 throw new FileNotFoundException("The note to delete does not exist.");
             File.Delete(filePath);
             noteCache.Remove(noteName);
+        }
+
+        private void ValidateNoteName(string noteName)
+        {
+            if (string.IsNullOrWhiteSpace(noteName))
+                throw new ArgumentException("Note name cannot be null or whitespace.", nameof(noteName));
         }
 
         public async Task CreateNoteAsync(string noteName, string content)
