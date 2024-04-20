@@ -66,9 +66,16 @@ namespace Obsidian
 
         public async Task CreateNoteAsync(string noteName, string content)
         {
+            ValidateNoteName(noteName);
+            if (content == null) throw new ArgumentNullException(nameof(content), "Note content cannot be null.");
+
             string filePath = Path.Combine(vaultPath, noteName + ".md");
             await File.WriteAllTextAsync(filePath, content);
-            noteCache[noteName] = content;
+
+            lock (cacheLock)
+            {
+                noteCache[noteName] = content;
+            }
         }
 
         public async Task AppendContentAsync(string noteName, string content)
