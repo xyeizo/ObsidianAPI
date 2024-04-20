@@ -178,34 +178,39 @@ namespace Obsidian
 
         public async Task ApplyTableAsync(string noteName, string[,] data)
         {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data), "Table data cannot be null.");
+
             StringBuilder sb = new StringBuilder();
             int rows = data.GetLength(0);
             int cols = data.GetLength(1);
 
+            sb.Append('|');
             for (int col = 0; col < cols; col++)
             {
-                sb.Append($"| {data[0, col]} ");
+                sb.Append($" {data[0, col]} |");
             }
-            sb.AppendLine("|");
+            sb.AppendLine();
 
+            sb.Append('|');
             for (int col = 0; col < cols; col++)
             {
-                sb.Append("| --- ");
+                sb.Append(" --- |");
             }
-            sb.AppendLine("|");
+            sb.AppendLine();
 
             for (int row = 1; row < rows; row++)
             {
+                sb.Append('|');
                 for (int col = 0; col < cols; col++)
                 {
-                    sb.Append($"| {data[row, col]} ");
+                    sb.Append($" {data[row, col]} |");
                 }
-                sb.AppendLine("|");
+                sb.AppendLine();
             }
 
             await AppendContentAsync(noteName, sb.ToString());
         }
-
         public async Task BulkDeleteNotesAsync(Func<string, bool> filter)
         {
             var files = Directory.GetFiles(vaultPath, "*.md");
