@@ -213,16 +213,29 @@ namespace Obsidian
         }
         public async Task BulkDeleteNotesAsync(Func<string, bool> filter)
         {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter), "Filter function cannot be null.");
+
             var files = Directory.GetFiles(vaultPath, "*.md");
+            List<Task> deleteTasks = new List<Task>();
+
             foreach (var file in files)
             {
                 var noteName = Path.GetFileNameWithoutExtension(file);
                 if (filter(noteName))
                 {
-                    File.Delete(file);
-                    noteCache.Remove(noteName);
+                    deleteTasks.Add(Task.Run(() =>
+                    {
+                        File.Delete(file);
+                        lock (cacheLock)
+                        {
+                            noteCache.Remove(noteName);
+                        }
+                    }));
                 }
             }
+
+            await Task.WhenAll(deleteTasks);
         }
     }
 }
