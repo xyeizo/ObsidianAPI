@@ -153,10 +153,12 @@ namespace Obsidian
             {
                 string noteName = Path.GetFileNameWithoutExtension(file);
                 string content = await File.ReadAllTextAsync(file);
-                noteCache[noteName] = content;
+                lock (cacheLock)
+                {
+                    noteCache[noteName] = content;
+                }
             }
         }
-
         public async Task AddTagsAsync(string noteName, List<string> tags)
         {
             StringBuilder tagsLine = new StringBuilder();
