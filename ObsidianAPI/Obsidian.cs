@@ -44,11 +44,18 @@ namespace Obsidian
 
         public void DeleteNote(string noteName)
         {
+            ValidateNoteName(noteName);
+
             string filePath = Path.Combine(vaultPath, noteName + ".md");
             if (!File.Exists(filePath))
-                throw new FileNotFoundException("The note to delete does not exist.");
+                throw new FileNotFoundException($"The note '{noteName}' does not exist.");
+
             File.Delete(filePath);
-            noteCache.Remove(noteName);
+
+            lock (cacheLock)
+            {
+                noteCache.Remove(noteName);
+            }
         }
 
         private void ValidateNoteName(string noteName)
