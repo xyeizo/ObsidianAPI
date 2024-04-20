@@ -161,19 +161,19 @@ namespace Obsidian
         }
         public async Task AddTagsAsync(string noteName, List<string> tags)
         {
+            if (tags == null || tags.Any(tag => string.IsNullOrWhiteSpace(tag)))
+                throw new ArgumentException("Tags list cannot be null and must contain valid tags.");
+
             StringBuilder tagsLine = new StringBuilder();
-            foreach (var tag in tags)
-            {
-                tagsLine.Append($"- #{tag}\n");
-            }
-            await AppendContentAsync(noteName, "\n- Tags\n\t" + tagsLine + "\n");
+            tags.ForEach(tag => tagsLine.Append($"- #{tag.Trim()}\n"));
+            await AppendContentAsync(noteName, "\n- Tags\n\t" + tagsLine);
         }
 
         public async Task<List<string>> GetTagsAsync(string noteName)
         {
             string content = await ReadNoteAsync(noteName);
             var matches = Regex.Matches(content, @"#\w+");
-            return matches.Cast<Match>().Select(match => match.Value).ToList();
+            return matches.Cast<Match>().Select(match => match.Value.TrimStart('#')).ToList();
         }
 
         public async Task ApplyTableAsync(string noteName, string[,] data)
