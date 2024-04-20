@@ -134,11 +134,14 @@ namespace Obsidian
 
         public async Task<List<string>> SearchNotesAsync(string searchTerm)
         {
+            if (string.IsNullOrEmpty(searchTerm))
+                throw new ArgumentException("Search term cannot be null or empty.");
+
             if (noteCache.Count == 0)
             {
                 await CacheAllNotesAsync();
             }
-            return noteCache.Where(kv => kv.Value.Contains(searchTerm))
+            return noteCache.Where(kv => kv.Value.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                             .Select(kv => kv.Key)
                             .ToList();
         }
